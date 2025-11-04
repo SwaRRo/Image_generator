@@ -1,0 +1,5 @@
+{
+  "name": "Image creator for newsletter",
+  "description": "A tool to take your written stories and generate an image or video for a specific frame or scenario using Gemini.",
+  "requestFramePermissions": []
+}
