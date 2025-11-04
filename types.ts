@@ -1,13 +1,13 @@
 export type GenerationType = 'image' | 'video';
 
-// Fix: Replaced anonymous type with a named interface `AIStudio` to resolve a conflict
+// Fix: Moved the AIStudio interface into `declare global` to resolve a conflict
 // with an existing global declaration for `window.aistudio`.
-interface AIStudio {
-    hasSelectedApiKey: () => Promise<boolean>;
-    openSelectKey: () => Promise<void>;
-}
-
 declare global {
+    interface AIStudio {
+        hasSelectedApiKey: () => Promise<boolean>;
+        openSelectKey: () => Promise<void>;
+    }
+
     interface Window {
         aistudio?: AIStudio;
     }

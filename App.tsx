@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useEffect } from 'react';
 import { GenerationType } from './types';
 import { generateImageFromPrompt, generateVideoFromPrompt } from './services/geminiService';
@@ -13,6 +12,50 @@ const Header: React.FC = () => (
     <p className="mt-2 text-lg text-gray-400">Bring your stories to life with AI-generated visuals.</p>
   </header>
 );
+
+const extractContextFromStory = (fullStory: string, keySentence: string): string => {
+  if (!fullStory.trim()) {
+      throw new Error("The story is empty. Please provide a story.");
+  }
+  if (!keySentence.trim()) {
+      throw new Error("Please provide a key sentence from the story.");
+  }
+
+  const trimmedKeySentence = keySentence.trim();
+  // Use a case-insensitive check for better UX
+  if (fullStory.toLowerCase().indexOf(trimmedKeySentence.toLowerCase()) === -1) {
+      throw new Error("The key sentence was not found in the story. Please make sure it's an exact copy from the text above.");
+  }
+
+  // Split story into paragraphs. A paragraph is separated by one or more newlines.
+  const paragraphs = fullStory.split(/\n+/).filter(p => p.trim() !== '');
+
+  const containingParagraphIndex = paragraphs.findIndex(p => p.toLowerCase().includes(trimmedKeySentence.toLowerCase()));
+
+  if (containingParagraphIndex !== -1) {
+      const contextParagraphs = [];
+
+      // Add the paragraph before, if it exists
+      if (containingParagraphIndex > 0) {
+          contextParagraphs.push(paragraphs[containingParagraphIndex - 1].trim());
+      }
+
+      // Add the main paragraph
+      contextParagraphs.push(paragraphs[containingParagraphIndex].trim());
+
+      // Add the paragraph after, if it exists
+      if (containingParagraphIndex < paragraphs.length - 1) {
+          contextParagraphs.push(paragraphs[containingParagraphIndex + 1].trim());
+      }
+      
+      return contextParagraphs.join('\n\n');
+  }
+
+  // This case should ideally not be hit because of the `includes` check above,
+  // but it's a safe fallback.
+  throw new Error("Could not isolate the paragraph containing the key sentence.");
+};
+
 
 const App: React.FC = () => {
   const [story, setStory] = useState<string>('');
@@ -57,19 +100,34 @@ const App: React.FC = () => {
 
 
   const handleGenerate = useCallback(async () => {
-    if (!prompt) {
-      setError('Please provide a scenario or prompt.');
-      return;
+    setError(null);
+
+    if (generationType === 'image') {
+      if (!story) {
+        setError('Please provide a story to visualize.');
+        return;
+      }
+      if (!prompt) {
+        setError('Please provide a key sentence from the story.');
+        return;
+      }
+    } else { // video
+      if (!prompt) {
+        setError('Please provide a scenario to visualize for the video.');
+        return;
+      }
     }
 
+
     setIsLoading(true);
-    setError(null);
     setOutputUrl(null);
 
     try {
       if (generationType === 'image') {
+        setLoadingMessage('Finding scene in story...');
+        const imagePrompt = extractContextFromStory(story, prompt);
         setLoadingMessage('Crafting your image...');
-        const imageUrl = await generateImageFromPrompt(prompt);
+        const imageUrl = await generateImageFromPrompt(imagePrompt);
         setOutputUrl(imageUrl);
       } else if (generationType === 'video') {
         setLoadingMessage('Initializing video generation...');
@@ -88,7 +146,7 @@ const App: React.FC = () => {
       setIsLoading(false);
       setLoadingMessage('');
     }
-  }, [prompt, generationType]);
+  }, [prompt, story, generationType]);
 
   return (
     <div className="min-h-screen bg-gray-900 text-gray-200">

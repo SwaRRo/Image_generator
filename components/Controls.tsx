@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { GenerationType } from '../types';
 
@@ -53,6 +52,8 @@ const Controls: React.FC<ControlsProps> = ({
     const IconVideo = () => (
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="m15.75 10.5 4.72-4.72a.75.75 0 0 1 1.28.53v11.38a.75.75 0 0 1-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 0 0 2.25-2.25v-9A2.25 2.25 0 0 0 13.5 5.25h-9a2.25 2.25 0 0 0-2.25 2.25v9A2.25 2.25 0 0 0 4.5 18.75Z" /></svg>
     );
+  
+  const isImageMode = generationType === 'image';
 
   return (
     <div className="bg-gray-800 p-6 rounded-xl shadow-2xl flex flex-col gap-6">
@@ -71,13 +72,16 @@ const Controls: React.FC<ControlsProps> = ({
 
       <div>
         <label htmlFor="prompt" className="block text-sm font-medium text-gray-300 mb-2">
-          Scenario to Visualize
+          {isImageMode ? 'Key Sentence from Story' : 'Scenario to Visualize'}
         </label>
         <textarea
           id="prompt"
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
-          placeholder="e.g., A neon hologram of a cat driving at top speed through a futuristic city."
+          placeholder={isImageMode 
+            ? "e.g., Copy and paste a sentence from your story above to generate an image for that scene."
+            : "e.g., A neon hologram of a cat driving at top speed through a futuristic city."
+          }
           className="w-full h-24 p-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors"
         />
       </div>
@@ -106,7 +110,7 @@ const Controls: React.FC<ControlsProps> = ({
       
       <button
         onClick={onGenerate}
-        disabled={isLoading || !isApiKeyReady || !prompt}
+        disabled={isLoading || !isApiKeyReady || !prompt || (isImageMode && !story)}
         className="w-full bg-indigo-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-indigo-700 disabled:bg-gray-600 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
       >
         {isLoading ? (
